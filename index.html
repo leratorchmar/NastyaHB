@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Тест для Насти 🐱🎂</title>
-<!-- Заменили html2pdf.js на html3pdf (исправляет пустые/битые PDF на телефонах) -->
-<script src="https://cdn.jsdelivr.net/npm/html3pdf@0.0.5/dist/html3pdf.bundle.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <style>
   * { box-sizing: border-box; }
   body {
@@ -158,7 +157,7 @@
     <button id="clearBtn">🧹 Очистить всё</button>
   </div>
   <div id="status"></div>
-  <div class="hint">PDF скачается на телефон. Отправь его Лерке в мессенджере 💌</div>
+  <div class="hint">PDF откроется в новой вкладке — сохрани его и отправь Лерке 💌</div>
 </div>
 
 <script>
@@ -228,28 +227,20 @@
         windowWidth: document.body.scrollWidth
       },
       jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-      // Упростили pagebreak, чтобы не было лишних разрывов
       pagebreak: { mode: ['css', 'legacy'] }
     };
 
     try {
-      // html3pdf использует тот же API, что и html2pdf
-      await html3pdf().set(opt).from(clone).save();
-      statusEl.textContent = '✅ PDF сохранён! Проверь загрузки и отправь Лерке 🐾';
+      // Генерируем PDF как Blob и открываем в новой вкладке для ручного сохранения
+      const blob = await html2pdf().set(opt).from(clone).outputPdf('blob');
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      statusEl.textContent = '📄 PDF открыт в новой вкладке! Нажми «Поделиться» → «Сохранить в Файлы» 🐾';
       statusEl.style.display = 'block';
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     } catch (e) {
       console.error('PDF error:', e);
-      // Запасной вариант: попробовать открыть в новой вкладке, чтобы можно было сохранить вручную
-      try {
-        const blob = await html3pdf().set(opt).from(clone).outputPdf('blob');
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        statusEl.textContent = '📄 PDF открыт в новой вкладке — сохрани его оттуда 🐾';
-        statusEl.style.display = 'block';
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      } catch (e2) {
-        alert('Не получилось создать PDF 😔 Попробуй ещё раз или сделай скриншот.');
-      }
+      alert('Не получилось создать PDF 😔 Попробуй ещё раз.');
     } finally {
       btn.disabled = false;
       btn.textContent = '🐱 Сохранить и отправить Лерке';
